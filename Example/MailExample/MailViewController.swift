@@ -161,6 +161,7 @@ extension MailViewController: SwipeTableViewCellDelegate {
         var options = SwipeTableOptions()
         options.expansionStyle = orientation == .left ? .selection : .destructive
         options.transitionStyle = defaultOptions.transitionStyle
+        options.expandWhenEmpty = true
         
         switch buttonStyle {
         case .backgroundColor:

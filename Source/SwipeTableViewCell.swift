@@ -27,6 +27,8 @@ open class SwipeTableViewCell: UITableViewCell {
 
     var originalLayoutMargins: UIEdgeInsets = .zero
     
+    var options: SwipeTableOptions = SwipeTableOptions()
+    
     lazy var panGestureRecognizer: UIPanGestureRecognizer = {
         let gesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gesture:)))
         gesture.delegate = self
@@ -132,10 +134,28 @@ open class SwipeTableViewCell: UITableViewCell {
             }
             
         case .changed:
-            guard let actionsView = actionsView else { return }
-
             let translation = gesture.translation(in: target).x
             scrollRatio = 1.0
+            
+            // Reusable for target offset
+            let expandTargetTo = { (width: CGFloat) in
+                target.center.x = gesture.elasticTranslation(in: target,
+                                                             withLimit: CGSize(width: width, height: 0),
+                                                             fromOriginalCenter: CGPoint(x: self.originalCenter, y: 0),
+                                                             applyingRatio: self.elasticScrollRatio).x
+                if (target.center.x - self.originalCenter) / translation != 1.0 {
+                    self.scrollRatio = self.elasticScrollRatio
+                }
+            }
+            
+            guard let actionsView = actionsView else {
+                
+                if options.expandWhenEmpty {
+                    expandTargetTo(0.0)
+                }
+                
+                return
+            }            
             
             // Check if dragging past the center of the opposite direction of action view, if so
             // then we need to apply elasticity
@@ -167,16 +187,17 @@ open class SwipeTableViewCell: UITableViewCell {
                 
                 actionsView.setExpanded(expanded: expanded, feedback: true)
             } else {
-                target.center.x = gesture.elasticTranslation(in: target,
-                                                             withLimit: CGSize(width: actionsView.preferredWidth, height: 0),
-                                                             fromOriginalCenter: CGPoint(x: originalCenter, y: 0),
-                                                             applyingRatio: elasticScrollRatio).x
-                if (target.center.x - originalCenter) / translation != 1.0 {
-                    scrollRatio = elasticScrollRatio
-                }
+                expandTargetTo(actionsView.preferredWidth)
             }
         case .ended:
-            guard let actionsView = actionsView else { return }
+            guard let actionsView = actionsView else {
+                
+                // Bounce back
+                if options.expandWhenEmpty {
+                    animate(toOffset: bounds.midX)
+                }
+                return
+            }
 
             let velocity = gesture.velocity(in: target)
             state = targetState(forVelocity: velocity)
@@ -206,12 +227,15 @@ open class SwipeTableViewCell: UITableViewCell {
     @discardableResult
     func showActionsView(for orientation: SwipeActionsOrientation) -> Bool {
         guard let tableView = tableView,
-            let indexPath = tableView.indexPath(for: self),
-            let actions = delegate?.tableView(tableView, editActionsForRowAt: indexPath, for: orientation),
+            let indexPath = tableView.indexPath(for: self)
+            else { return false }
+        
+        options = delegate?.tableView(tableView, editActionsOptionsForRowAt: indexPath, for: orientation) ?? SwipeTableOptions()
+        
+        // Guard separately to ensure `options` is set
+        guard let actions = delegate?.tableView(tableView, editActionsForRowAt: indexPath, for: orientation),
             actions.count > 0
-            else {
-                return false
-        }
+            else { return false }
         
         originalLayoutMargins = super.layoutMargins
         
@@ -229,11 +253,6 @@ open class SwipeTableViewCell: UITableViewCell {
     }
     
     func configureActionsView(with actions: [SwipeAction], for orientation: SwipeActionsOrientation) {
-        guard let tableView = tableView,
-            let indexPath = tableView.indexPath(for: self) else { return }
-        
-        let options = delegate?.tableView(tableView, editActionsOptionsForRowAt: indexPath, for: orientation) ?? SwipeTableOptions()
-        
         self.actionsView?.removeFromSuperview()
         self.actionsView = nil
         
