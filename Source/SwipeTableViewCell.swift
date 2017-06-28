@@ -239,11 +239,6 @@ open class SwipeTableViewCell: UITableViewCell {
         
         originalLayoutMargins = super.layoutMargins
         
-        // Remove highlight and deselect any selected cells
-        super.setHighlighted(false, animated: false)
-        let selectedIndexPaths = tableView.indexPathsForSelectedRows
-        selectedIndexPaths?.forEach { tableView.deselectRow(at: $0, animated: false) }
-        
         // Temporarily remove table gestures
         tableView.setGestureEnabled(false)
         

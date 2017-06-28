@@ -232,6 +232,7 @@ class SwipeActionsView: UIView {
 
 class SwipeActionButtonWrapperView: UIView {
     let contentRect: CGRect
+    var action: SwipeAction
     
     init(frame: CGRect, action: SwipeAction, orientation: SwipeActionsOrientation, contentWidth: CGFloat) {
         switch orientation {
@@ -241,12 +242,22 @@ class SwipeActionButtonWrapperView: UIView {
             contentRect = CGRect(x: 0, y: 0, width: contentWidth, height: frame.height)
         }
         
+        self.action = action
         super.init(frame: frame)
         
-        configureBackgroundColor(with: action)
+        configureBackgroundColor()
     }
     
-    func configureBackgroundColor(with action: SwipeAction) {
+    override var backgroundColor: UIColor? {
+        get { return super.backgroundColor }
+        set {
+            /// Guard against UITableViewCell setting to clear when selected
+            guard action.hasBackgroundColor && newValue != UIColor.clear else { return }
+            super.backgroundColor = newValue
+        }
+    }
+    
+    func configureBackgroundColor() {
         guard action.hasBackgroundColor else { return }
         
         if let backgroundColor = action.backgroundColor {
