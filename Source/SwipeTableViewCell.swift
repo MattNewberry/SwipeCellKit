@@ -239,8 +239,10 @@ open class SwipeTableViewCell: UITableViewCell {
         
         originalLayoutMargins = super.layoutMargins
         
-        // Temporarily remove table gestures
-        tableView.setGestureEnabled(false)
+        // Remove highlight and deselect any selected cells
+        super.setHighlighted(false, animated: false)
+        let selectedIndexPaths = tableView.indexPathsForSelectedRows
+        selectedIndexPaths?.forEach { tableView.deselectRow(at: $0, animated: false) }
         
         configureActionsView(with: actions, for: orientation)
         
@@ -406,8 +408,6 @@ extension SwipeTableViewCell {
 
     func reset() {
         state = .center
-        
-        tableView?.setGestureEnabled(true)
         
         actionsView?.removeFromSuperview()
         actionsView = nil
