@@ -240,9 +240,9 @@ open class SwipeTableViewCell: UITableViewCell {
         originalLayoutMargins = super.layoutMargins
         
         // Remove highlight and deselect any selected cells
-        super.setHighlighted(false, animated: false)
-        let selectedIndexPaths = tableView.indexPathsForSelectedRows
-        selectedIndexPaths?.forEach { tableView.deselectRow(at: $0, animated: false) }
+//        super.setHighlighted(false, animated: false)
+//        let selectedIndexPaths = tableView.indexPathsForSelectedRows
+//        selectedIndexPaths?.forEach { tableView.deselectRow(at: $0, animated: false) }
         
         configureActionsView(with: actions, for: orientation)
         
